@@ -1,9 +1,8 @@
 from __future__ import annotations
 from collections.abc import Callable
-
 from typing import Tuple, TypeVar
-
 from data_structures import *
+from algorithms.mergesort import mergesort
 
 K = TypeVar('K')
 I = TypeVar('I')
@@ -26,10 +25,12 @@ class BetterBST(BinarySearchTree[K, I]):
             elements(ArrayList[tuple[K, I]]): The elements to be inserted into the tree.
 
         Complexity:
-            Best Case Complexity: TODO
-            Worst Case Complexity: TODO
+            Best Case: O(n log n)
+            Worst Case: O(n log n)
+
         Justification:
-            TODO
+            The initialization involves __sort_elements (O(n log n)) and __build_balanced_tree 
+            (O(n log n)), both of which contribute to the overall O(n log n) complexity.
         """
         super().__init__()
         new_elements: ArrayList[Tuple[K, I]] = self.__sort_elements(elements)
@@ -48,13 +49,13 @@ class BetterBST(BinarySearchTree[K, I]):
             ArrayList(Tuple[K, I]]) - elements after being sorted.
 
         Complexity:
-            Best Case Complexity: TODO
-            Worst Case Complexity: TODO
+            Best Case: O(n log n)
+            Worst Case: O(n log n)
 
         Justification:
-            TODO
+            mergesort is a comparison-based divide-and-conquer algorithm with guaranteed O(n log n) complexity.
         """
-        raise NotImplementedError("Please implement the __sort_elements method.")
+        return mergesort(elements, key=lambda x: x[0])
 
     def __build_balanced_tree(self, elements: ArrayList[Tuple[K, I]]) -> None:
         """
@@ -69,13 +70,22 @@ class BetterBST(BinarySearchTree[K, I]):
         Complexity:
             (This is the actual complexity of your code, 
             remember to define all variables used.)
-            Best Case Complexity: TODO
-            Worst Case Complexity: TODO
+            Best Case: O(n log n)
+            Worst Case: O(n log n)
 
         Justification:
-            TODO
+            Performs n inserts into the BST. Each insert is O(log n) since the tree is balanced.
         """
-        raise NotImplementedError("Please implement the __build_balanced_tree method.")
+        def build(left: int, right: int) -> None:
+            if left > right:
+                return
+            mid = (left + right) // 2
+            key, item = elements[mid]
+            self[key] = item  
+            build(left, mid - 1)
+            build(mid + 1, right)
+
+        build(0, len(elements) - 1)
 
     def filter_keys(self, filter_func1: Callable[[K], bool], filter_func2: Callable[[K], bool]) -> ArrayList[Tuple[K, I]]:
         """
@@ -88,9 +98,23 @@ class BetterBST(BinarySearchTree[K, I]):
             ArrayList[Tuple[K, I]]: An ArrayList of tuples containing Key,Item pairs that match the filter.
 
         Complexity:
-            Best Case Complexity: TODO
-            Worst Case Complexity: TODO
+            Best Case: O(log n * f), where f is the combined cost of filter_func1 and filter_func2 and n refers to the number of nodes in the tree.
+            Worst Case: O(n * f), where f is the combined cost of filter_func1 and filter_func2 and n refers to the number of nodes in the tree.
+
         Justification:
-            TODO
+            - Best case: If pruning or early stopping were possible, only a small portion of the tree is visited.
+            - Worst case: All n nodes must be visited (in-order traversal), and both filters applied to each.
         """
-        raise NotImplementedError("Please implement the filter_items method.")
+        result = ArrayList[Tuple[K, I]]()
+
+        def traverse(node):
+            if node is None:
+                return
+            traverse(node.left)
+            key = node.key
+            if filter_func1(key) and filter_func2(key):
+                result.append((key, node.item))
+            traverse(node.right)
+
+        traverse(self.root)
+        return result
